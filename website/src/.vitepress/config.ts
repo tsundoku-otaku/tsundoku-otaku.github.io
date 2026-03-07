@@ -26,7 +26,7 @@ const octokit = new Octokit()
 const releaseDateCache = new Map<string, string>()
 
 const title = 'Tsundoku'
-const description = 'Discover and read manga, webtoons, comics, and more – easier than ever on your Android device.'
+const description = 'Discover and read novels and more – easier than ever on your Android device.'
 
 const env = loadEnv('', process.cwd())
 const hostname: string = env.VITE_HOSTNAME || 'http://localhost:4173'

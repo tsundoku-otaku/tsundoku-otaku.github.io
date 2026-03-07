@@ -16,7 +16,7 @@ const headConfig: HeadConfig[] = [
   // ['meta', { name: 'twitter:site', content: '@tsundoku-otaku' }],
   // ['meta', { name: 'twitter:creator', content: '@tsundoku-otaku' }],
   ['meta', { property: 'og:site_name', content: 'Tsundoku' }],
-  ['meta', { property: 'og:description', content: 'Discover and read manga, webtoons, comics, and more – easier than ever on your Android device.' }],
+  ['meta', { property: 'og:description', content: 'Discover and read novels and more – easier than ever on your Android device.' }],
   ['meta', { property: 'og:locale', content: 'en_US' }],
   ['meta', { property: 'og:type', content: 'website' }],
 ]

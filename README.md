@@ -7,7 +7,7 @@
 # Tsundoku [Website](#)
 
 ### Full-featured reader
-Discover and read manga, webtoons, comics, and more – easier than ever on your Android device.
+Discover and read novels and more – easier than ever on your Android device.
 
 [![Discord server](https://img.shields.io/discord/1475219284551536653.svg?label=&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF)](https://discord.gg/RycBkEgrPE)
 [![GitHub downloads](https://img.shields.io/github/downloads/tsundoku-otaku/tsundoku/total?label=downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/tsundoku-otaku/tsundoku/releases)

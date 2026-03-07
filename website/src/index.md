@@ -5,7 +5,7 @@ layout: home
 hero:
   name: Tsundoku
   text: Full-featured reader
-  tagline: Discover and read manga, webtoons, comics, and more – easier than ever on your Android device.
+  tagline: Discover and read novels and more – easier than ever on your Android device.
   image:
     alt: Tsundoku Library Tab Dark
     light: /home/phone.light.webp
