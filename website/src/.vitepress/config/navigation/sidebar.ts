@@ -113,6 +113,10 @@ function defaultSidebar(): DefaultTheme.SidebarItem[] {
           collapsed: true,
           items: [
             {
+              text: 'Novel Local Sources',
+              link: '/docs/guides/local-source/novels',
+            },
+            {
               text: 'Advanced editing',
               link: '/docs/guides/local-source/advanced',
             },
