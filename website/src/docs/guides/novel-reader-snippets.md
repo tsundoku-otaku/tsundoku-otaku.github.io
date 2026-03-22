@@ -116,5 +116,5 @@ if (target) {
 ### Style conflict
 
 - Move conflicting rule to a later snippet or combine into one snippet.
-- Some elements like body might have !important applies on some of the styles. Apply 
-!important on your style if it doesn't work.
+- Some elements like body might have [`!important`](https://www.w3schools.com/Css/css_important.asp) applied on some of the styles. Apply 
+`!important` on your style if it doesn't work. This overrides other CSS elements, which can get the desired result if you know it takes priority!
