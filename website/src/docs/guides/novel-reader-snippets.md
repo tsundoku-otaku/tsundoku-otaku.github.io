@@ -1,99 +1,80 @@
 ---
 title: Novel reader snippets
 titleTemplate: Guides
-description: How custom CSS/JS snippets work in the novel reader.
+description: How custom CSS/JS snippets, regex rules, and the Tsundoku JS object work in the novel reader.
 ---
 
 # Novel reader snippets
 
-How custom CSS and JavaScript snippets behave in the **Novel WebView reader**:
+Custom CSS/JS snippets and the `window.Tsundoku` object run only in the **WebView** novel
+renderer. Regex find/replace and embedded CSS/JS toggles also apply, with the rules below.
 
-- Where snippets are applied
-- Which rules win when multiple styles/scripts exist
-
-## Before you start
-
-Snippets are intended for the **WebView novel renderer**.
+## Enable WebView
 
 1. Open a novel chapter.
-2. Open reader settings.
-3. Set rendering mode to **WebView**.
-4. Go to **Advanced** and use the CSS/JS snippet sections.
+2. Open reader settings, set **Rendering mode** to **WebView**.
+3. Open the **Advanced** tab for regex, embedded toggles, and snippets.
 
-If you use the TextView renderer, WebView snippets do not run.  
-This is a function of the native android TextView, and will not be changed.
+The Native (TextView) renderer ignores all WebView snippets and embedded CSS/JS. This is a limit
+of Android's `TextView`, not a setting.
 
-## Execution order
+## Content pipeline
 
-For a normal chapter load, the order is:
+Chapter text passes through this order before it reaches either renderer:
 
-1. **Chapter preprocessing (native Kotlin):**
-   - Hide chapter title option
-   - Force lowercase option
-   - Translation option
-2. **Content sanitization:**
-   - Strips chapter-inline `<script>`, `<style>`, and `<noscript>` blocks
-   - Media stripping option
-   - Applies enabled **Regex Find/Replace** rules
-3. **EPUB extraction (if enabled):**
-   - If `Enable EPUB CSS` is on, `<style data-epub-css>` is moved into the document `<head>`
-   - If `Enable EPUB JS` is on, `<script data-epub-js>` is moved into the document `<head>`
-4. **Initial HTML is loaded into WebView** (with base style + extracted EPUB head content + `window.__TSUNDOKU_*` variables).
-5. **After page finished (`onPageFinished`) the app injects in this order:**
-   - Reader settings CSS/JS
-   - EPUB JS/CSS
-   - Custom CSS
-   - Custom JS
+1. Strip chapter title (if enabled)
+2. Normalize markup
+3. Regex and find/replace rules
+4. Force lowercase (if enabled)
+5. Translate (if enabled)
+6. Sanitize for the target renderer
 
-User CSS/JS runs **after** base content load, and after EPUB head content is attached.
+Sanitize, step 6, removes `<noscript>` and HTML comments always, and media when **Block media**
+is on. It strips chapter `<script>`/`<style>` unless the matching **Embedded CSS / JS** toggle is
+on (TextView always strips both). Your snippets are injected after this, so they always run.
 
-## CSS priority and merge order
+## Injection order (WebView)
 
-The injected style text is assembled in this order:
+The chapter loads with a base `<style>`, the `window.Tsundoku` object, and theme variables already
+in `<head>`. After `onPageFinished` the app re-injects:
 
-1. generated base style (font size, line height, margins, colors, text selection, paragraph spacing, etc.)
-3. enabled CSS snippets (in list order)
+1. Combined style block: base style, then **Embedded CSS**, then enabled **CSS snippets** in
+   list order.
+2. `window.Tsundoku` refresh, then **Embedded JS**, then enabled **JS snippets** in list order.
 
-Because CSS is appended in that order, **later rules override earlier ones** when specificity is equal.
+For CSS **later rules win**. Use `!important` to
+beat a base rule when **Source CSS priority** forces base styles.
 
-## JavaScript behavior and order
+## The `window.Tsundoku` object
 
-The runtime JS layers are:
+Available to JS after page load:
 
-1. During initial HTML build, the app writes `window.__TSUNDOKU_*` variables:
-   - `__TSUNDOKU_CHAPTER_TITLE`
-   - `__TSUNDOKU_CHAPTER_NUMBER`
-   - `__TSUNDOKU_CHAPTER_URL`
-   - `__TSUNDOKU_NOVEL_URL`
-   - `__TSUNDOKU_IS_EDIT_MODE`
-   - `__TSUNDOKU_IS_INF_SCROLL`
-   - `__TSUNDOKU_TEXT_SELECTION_BLOCKED`
-   - `__TSUNDOKU_FORCED_LOWERCASE`
-2. After page finishes loading, object `window.Tsundoku` is created:
-   - `chapterTitle`, `chapterNumber`, `chapterUrl`, `novelUrl`
-   - `isEditMode`, `isInfScroll`, `textSelectionBlocked`, `forcedLowercase`
- 
+```js
+window.Tsundoku.novelUrl            // string
+window.Tsundoku.currentChapter      // { id, title, number, path, url }
+window.Tsundoku.chapters            // [ { id, title, number, path, url }, ... ] in order
+window.Tsundoku.runtime.isEditMode
+window.Tsundoku.runtime.isInfScroll
+window.Tsundoku.runtime.textSelectionBlocked
+window.Tsundoku.runtime.forcedLowercase
+```
 
-If you need more variables exposed to JS, open an issue with your use case or submit a PR.
+`runtime.*` values are re-pushed on chapter change and on settings change. Need another field
+exposed? Open an issue or PR with the use case.
 
-## EPUB CSS/JS options
+## Embedded CSS / JS toggles
 
-The reader has EPUB toggles in Advanced:
+In **Advanced**:
 
-- **Enable EPUB CSS**
-- **Enable EPUB JS**
+- **Embedded CSS** (on by default): keep `<style>` tags shipped inside the chapter HTML/EPUB.
+- **Embedded JS** (off by default): keep `<script>` tags shipped inside the chapter.
 
-These toggle whether EPUB-embedded blocks marked as `data-epub-css` and `data-epub-js` are kept and injected into `<head>`.
-
-## Js run order:
-For JS and CSS, Reader settings load first, then EPUB, then user code
+Off means those tags are stripped during sanitize. Both are WebView only.
 
 ## Safe snippet practices
 
-- Keep snippets small and focused.
-- Prefer id/class selectors scoped to chapter content.
-- Avoid heavy loops/mutation observers without guards.
-- Guard against missing nodes:
+- Scope to chapter content with id/class selectors; avoid `*`.
+- Guard against missing nodes and against infinite loops:
 
 ```js
 const target = document.querySelector('.chapter-content');
@@ -101,20 +82,10 @@ if (target) {
   // your logic
 }
 ```
-- If your code has loops, guard against infinite loops.
-- For CSS, prefer scoped selectors over `*` when possible.
 
 ## Troubleshooting
 
-### Snippet seems ignored
-
-- Confirm renderer is **WebView**.
-- Ensure snippet is **Enabled**.
-- Check for selector mismatch on current source HTML (Textview mode has a raw html option).
-- Temporarily disable other snippets to detect override conflicts.
-
-### Style conflict
-
-- Move conflicting rule to a later snippet or combine into one snippet.
-- Some elements like body might have [`!important`](https://www.w3schools.com/Css/css_important.asp) applied on some of the styles. Apply 
-`!important` on your style if it doesn't work. This overrides other CSS elements, which can get the desired result if you know it takes priority!
+- **Snippet ignored:** confirm renderer is **WebView** and the snippet is enabled. Native mode
+  has a raw-HTML option to inspect the source markup.
+- **Style conflict:** move the rule to a later snippet, or add `!important`. Base styles may carry
+  `!important` when **Source CSS priority** is set, so match it.
